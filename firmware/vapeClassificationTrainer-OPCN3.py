@@ -27,15 +27,21 @@ np.random.seed(0)
 
 def main():
 
+    dataCSV = "../data/OPC_Vape.csv"
+    predictedCSV = dataCSV.replace(".csv","_Prediction.csv")
+    filename = '../models/vapeClassifierOPCN3.sav'
+
+    print(" ")
     print("-----------------------------------------------------")
     print("Multi-scale Integrated Sensing and Simulation (MINTS)")
     print('-----------------------------------------------------')
-    print("-Random Forest Model for an Automated Vape Detector -")
+    print("Automated Vape Detector")
     print('-----------------------------------------------------')
     print(' ')
+    print('-----------------------------------------------------')
+    print("Reading CSV data from " +  str(dataCSV))
 
     #  Reading Training Data
-    dataCSV = "../data/OPC_Vape.csv"
     df = pd.read_csv(dataCSV)
 
     # Recognizing Feature Variables
@@ -104,6 +110,10 @@ def main():
                    'PM$_{10}$',\
                    ]
 
+    print(" ")
+    print('-----------------------------------------------------')
+    print("Dividing into Training and Test Data")
+
     allFeatures=df[featureLabels]
 
     #  Reading Target Variable
@@ -121,17 +131,23 @@ def main():
     trainTargets       = allTargets[df['is_train']==True]
     testTargets        = allTargets[df['is_train']==False]
 
-    # Creation of a Random Forest Classifier
+    print(" ")
+    print('-----------------------------------------------------')
+    print("Training a Random Forest Classifier")
+
     clf = RandomForestClassifier(n_jobs=2, random_state=0)
-
-
 
     # Training the Classifier
     clf.fit(trainFeatures, trainTargets)
 
-    filename = '../models/vapeClassifierOPCN3.sav'
+    print(" ")
+    print('-----------------------------------------------------')
+    print("Saving the trainined Random Forest Classifier @ :" + filename)
     pickle.dump(clf, open(filename, 'wb'))
 
+    print('-----------------------------------------------------')
+    print("Gaining Predictions........................")
+    print(" ")
     trainPrediction =  clf.predict(trainFeatures)
     testPrediction  =  clf.predict(testFeatures)
     allPrediction   =  clf.predict(allFeatures)
@@ -146,17 +162,22 @@ def main():
 
 
     print('-----------------------------------------------------')
-    print("Gaining Predictor importances........................")
+    print("Printing Predictor importances........................")
+    print(" ")
+
+
+
     for name, importance in zip(featureLabels, clf.feature_importances_):
         print(name, "=", importance)
 
     plotFeatureImportainces(featuresDisplayed,\
                                 clf.feature_importances_,\
                                     "Feature Importances - OPCN3")
-
+    print(" ")
+    
     print('-----------------------------------------------------')
     print("Gaining Confusion Matrices...........................")
-
+    print(" ")
     trainConfusion= confusion_matrix(trainTargets,trainPrediction)
     testConfusion= confusion_matrix(testTargets,testPrediction)
     allConfusion= confusion_matrix(allTargets,allPrediction)
@@ -164,7 +185,7 @@ def main():
     print('-----------------------------------------------------')
     print("Confusion Matrix for Random Forest Classifier - Training")
     print(trainConfusion)
-
+    print(" ")
     plot_confusion_matrix(trainConfusion,
                           normalize    = False,
                           target_names = ['Clean', 'Juul','Lysol','Febreze','Breath'],
@@ -173,7 +194,7 @@ def main():
     print('-----------------------------------------------------')
     print("Confusion Matrix for Random Forest Classifier - Testing")
     print(testConfusion)
-
+    print(" ")
     plot_confusion_matrix(testConfusion,
                           normalize    = False,
                           target_names = ['Clean', 'Juul','Febreze','Breath'],
@@ -182,11 +203,33 @@ def main():
     print('-----------------------------------------------------')
     print("Confusion Matrix for Random Forest Classifier - All Data")
     print(allConfusion)
+    print(" ")
+
     plot_confusion_matrix(allConfusion,
                           normalize    = False,
                           target_names = ['Clean', 'Juul','Lysol','Febreze','Breath'],
                           title        = "All Data - OPCN3")
 
+
+    df['prediction']    = allPrediction
+    targetDisplayLabels = {0:'Clean', 1:'Juul',2:'Lysol',3:'Febreze',4:'Breath'}
+
+    df['predictionLabels']  = df['prediction'].map(targetDisplayLabels)
+
+    df['cleanProb'] = getColumn(allPredictionProbabilty,0)
+    df['juulProb'] = getColumn(allPredictionProbabilty,1)
+    df['lysolProb'] = getColumn(allPredictionProbabilty,2)
+    df['febrezeProb'] = getColumn(allPredictionProbabilty,3)
+    df['breathProb'] = getColumn(allPredictionProbabilty,4)
+
+    print('-----------------------------------------------------')
+    print("Saving Predictions @ :" + predictedCSV)
+    print(" ")
+    df.to_csv (predictedCSV, index = None, header=True)
+
+    print("-----------------------------------------------------")
+    print("Multi-scale Integrated Sensing and Simulation (MINTS)")
+    print('-----------------------------------------------------')
 
 
 if __name__ == "__main__":

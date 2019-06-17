@@ -93,3 +93,6 @@ def plot_confusion_matrix(cm,
     plt.ylabel('True label')
     plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
     plt.show()
+
+def getColumn(matrix, i):
+    return [row[i] for row in matrix]

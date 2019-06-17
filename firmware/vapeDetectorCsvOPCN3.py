@@ -28,8 +28,10 @@ np.random.seed(0)
 def main():
 
     modelLocation = '../models/vapeClassifierOPCN3.sav'
-    dataCSV = "../data/MINTS_001e06323952_OPCN3_2019_06_14.csv"
+    dataCSV       = "../data/MINTS_001e06323952_OPCN3_2019_06_14.csv"
+    predictedCSV  = dataCSV.replace(".csv","_Prediction.csv")
 
+    print(" ")
     print("-----------------------------------------------------")
     print("Multi-scale Integrated Sensing and Simulation (MINTS)")
     print('-----------------------------------------------------')
@@ -37,8 +39,8 @@ def main():
     print('-----------------------------------------------------')
     print(' ')
 
-
-    #  Reading Training Data
+    print('-----------------------------------------------------')
+    print("Reading CSV data from " +  str(dataCSV))
     df = pd.read_csv(dataCSV)
 
     # Recognizing Feature Variables
@@ -110,18 +112,45 @@ def main():
     features=df[featureLabels]
 
     # Loading Classifier
+    print(" ")
+    print('-----------------------------------------------------')
+    print("Loading the Classifier from " +  str(modelLocation))
     clf = pickle.load(open(modelLocation, 'rb'))
 
     # Gaining Predictions
+
+    print(" ")
     print('-----------------------------------------------------')
-    print("-- Prediction Probabilty --")
+    print("Gaining Final Prediction Probabilties")
     predictionProbabilty = clf.predict_proba(features)
-    print(predictionProbabilty)
 
-    print("-- Final Prediction --")
+    print(" ")
+    print('-----------------------------------------------------')
+    print("Gaining Final Predictions")
     prediction           = clf.predict(features)
-    print(prediction)
 
+    df['prediction']    = prediction
+    targetDisplayLabels = {0:'Clean', 1:'Juul',2:'Lysol',3:'Febreze',4:'Breath'}
+
+    df['predictionLabels']  = df['prediction'].map(targetDisplayLabels)
+
+    df['cleanProb']   = getColumn(predictionProbabilty,0)
+    df['juulProb']    = getColumn(predictionProbabilty,1)
+    df['lysolProb']   = getColumn(predictionProbabilty,2)
+    df['febrezeProb'] = getColumn(predictionProbabilty,3)
+    df['breathProb']  = getColumn(predictionProbabilty,4)
+
+    print("  ")
+    print("-----------------------------------------------------")
+    print("Printing CSV as "+ predictedCSV)
+
+    df.to_csv (predictedCSV, index = None, header=True)
+
+
+    print("  ")
+    print("-----------------------------------------------------")
+    print("Multi-scale Integrated Sensing and Simulation (MINTS)")
+    print('-----------------------------------------------------')
 
 if __name__ == "__main__":
    main()
